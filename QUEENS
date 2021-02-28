@@ -1,0 +1,708 @@
+.ORIG x3000
+
+LD R6, STACK
+
+LEA R1, TEST_ARRAY
+AND R3, R3, #0
+
+JSR GetNum
+
+ADD R6, R6, #-4
+
+STR R1, R6, #3	;array
+STR R0, R6, #2	;n
+STR R3, R6, #1	;k=0
+STR R3, R6, #0	;solutions=0
+
+JSR NQueenSolver
+ADD R6, R6, #4
+
+ADD R3, R3, R0
+
+LEA R0, POSIBLE_SOLUTIONS
+PUTS
+
+ADD R6, R6, #-1
+
+STR R3, R6, #0
+JSR PrintNum
+ADD R6, R6, #1
+
+
+
+
+
+HALT
+
+
+POSIBLE_SOLUTIONS .stringz "Number of possible solutions: "
+PTR .fill #0
+STACK .fill xBFFF
+N .fill 4
+TEST_ARRAY .blkw #30
+
+;-----------------------------------------------------------------------;
+
+;int NQueenSolver(int* queens, int n, int k, int solutions)
+NQueenSolver:
+	ADD R6, R6, #-6
+	
+	STR R1, R6, #5
+	STR R2, R6, #4
+	STR R3, R6, #3
+	STR R4, R6, #2
+	STR R5, R6, #1
+	STR R7, R6, #0
+	
+	LDR R0, R6, #6	;R0 = solutions
+	LDR R1, R6, #7	;R1 = k
+	LDR R2, R6, #8	;R2 = n
+	LDR R3, R6, #9	;R3 = queens_array
+	
+	NOT R7, R1
+	ADD R7, R7, #1	;R7=-K
+	
+	ADD R7, R7, R2
+	BRp CONTINUE_NQueenSolver	;if(n==k)
+	ADD R6, R6, #-2
+	STR R3, R6, #1
+	STR R2, R6, #0
+	JSR printQueensPositions	;print the solution
+	ADD R6, R6, #2
+	
+	ADD R0, R0, #1	;ADD 1 TO THE SOLUTIONS COUNTER
+	BR END_NQueenSolver
+CONTINUE_NQueenSolver:
+	AND R4, R4, #0	;R4 = -i
+FOR_LOOP_NQueenSolver:
+	ADD R7, R4, R2
+	BRz END_NQueenSolver	;i<n
+	LDR R3, R6, #9	;R3 = queens_array
+	ADD R7, R3, R1	;R7 = &queens_array[k]
+	NOT R5, R4
+	ADD R5, R5, #1 ;R5 = i
+	
+	STR R5, R7, #0	;queens_array[k] = i
+
+	
+	ADD R6, R6, #-3
+	
+	STR R3, R6, #2
+	STR R1, R6, #1
+	STR R2, R6, #0
+	
+	JSR isLegal
+	ADD R6, R6, #3
+	
+	ADD R7, R0, #-1
+	BRnp CONTINUE_FOR_LOOP_NQueenSolver
+	;RECURTION CALL
+	ADD R7, R1, #1	;R7 = k+1
+	LDR R0, R6, #6	;R0 = solutions
+	
+	ADD R6, R6, #-4
+	
+	STR R3, R6, #3	;array
+	STR R2, R6, #2	;n
+	STR R7, R6, #1	;k+1
+	STR R0, R6, #0	;solutions
+	JSR NQueenSolver
+	ADD R6, R6, #4
+	
+	STR R0, R6, #6	;solutions = R0
+	
+	
+CONTINUE_FOR_LOOP_NQueenSolver
+	LDR R0, R6, #6	;R0 = solutions
+	ADD R4, R4, #-1	;i--
+
+BR FOR_LOOP_NQueenSolver
+
+
+END_NQueenSolver:	
+	LDR R1, R6, #5
+	LDR R2, R6, #4
+	LDR R3, R6, #3
+	LDR R4, R6, #2
+	LDR R5, R6, #1
+	LDR R7, R6, #0
+	
+	ADD R6, R6, #6
+	RET
+
+
+
+
+
+
+;int isLegal(int* queens, int queen_number, int n)
+isLegal:
+	ADD R6, R6, #-6
+	
+	STR R1, R6, #5
+	STR R2, R6, #4
+	STR R3, R6, #3
+	STR R4, R6, #2
+	STR R5, R6, #1
+	STR R7, R6, #0
+	
+	LDR R1, R6, #8	;R1 = ARRAY
+	LDR R2, R6, #7	;R2 = queen_number
+	LDR R3, R6, #6	;R3 = N
+	
+	
+	
+	ADD R5, R1, R2	;R5 = &array[queen_number]
+	LDR R5, R5, #0	;R5 = array[queen_number]
+	
+	
+	AND R4, R4, #0	;R4 = -j
+	
+LOOP_isLegal:
+	ADD R0, R2, R4
+	BRz RETURN_TRUE_isLegal	;j<queen_number
+	LDR R0, R1, #0	;R0 = array[j]
+	
+	NOT R0, R0
+	ADD R0, R0, #1
+	
+	ADD R0, R0, R5	;R0 = array[queen_number] - array[j]
+	
+	ADD R6, R6, #-1
+	STR R0, R6, #0
+	JSR ABS		;R0 =	ABS( array[queen_number] - array[j] )
+	ADD R6, R6, #1
+	
+	ADD R7, R4, #0	;R7 = -j
+	
+	ADD R7, R7, R2	;R7 = queen_number - j
+	
+	NOT R7, R7
+	ADD R7, R7, #1
+	
+	ADD R7, R0, R7
+	BRz RETURN_FALSE_isLegal	;ABS( array[queen_number] - array[j] ) == queen_number - j
+	
+	LDR R0, R1, #0	;R0 = array[j]
+	
+	NOT R7, R5
+	ADD R7, R7, #1	;R7 = -array[queen_number]
+	
+	ADD R0, R7, R0
+	BRz RETURN_FALSE_isLegal	;queens[queen_number]==queens[j]
+	
+	ADD R1, R1, #1	;R1=array[j+1]
+	
+	ADD R4, R4, #-1	;j--
+	BR LOOP_isLegal
+	
+RETURN_TRUE_isLegal:
+	AND R0, R0, #0
+	ADD R0, R0, #1
+	BR END_isLegal
+
+RETURN_FALSE_isLegal:
+	AND R0, R0, #0
+	
+END_isLegal:
+	LDR R1, R6, #5
+	LDR R2, R6, #4
+	LDR R3, R6, #3
+	LDR R4, R6, #2
+	LDR R5, R6, #1
+	LDR R7, R6, #0
+	
+	ADD R6, R6, #6
+	RET
+
+////////////////////////////////////////////
+
+
+SOLUTIN_STRING .stringz "Solution: "
+printQueensPositions:
+	ADD R6, R6, #-4
+	
+	STR R2, R6, #3
+	STR R1, R6, #2
+	STR R7, R6, #1
+	STR R0, R6, #0
+	
+
+	LDR R1, R6, #5
+	LDR R2, R6, #4
+	
+	LEA R0, SOLUTIN_STRING
+	PUTS
+	
+	BRz END_printQueensPositions
+
+	BRp LOOP_printQueensPositions
+PRE_LOOP_printQueensPositions:
+	LD R0, SPACE
+	NOT R0, R0
+	ADD R0, R0, #1
+	OUT
+LOOP_printQueensPositions:
+	LDR R0, R1, #0
+	ADD R1, R1, #1
+	
+	ADD R6, R6, #-1
+	STR R0, R6, #0
+	
+	JSR PrintNum
+	
+	ADD R6, R6, #1
+	
+	ADD R2, R2, #-1
+	BRp PRE_LOOP_printQueensPositions
+	
+END_printQueensPositions:
+	AND R0, R0, #0
+	ADD R0, R0, #10
+	OUT
+	
+	LDR R7, R6, #1
+	LDR R0, R6, #0
+	LDR R1, R6, #2
+	LDR R2, R6, #3
+	
+	ADD R6, R6, #4
+	RET
+/////////////////////////////////////////
+ABS:
+	ADD R6, R6, #-1
+	STR R7, R6, #0
+	
+	LDR R7, R6, #1
+	BRzp END_ABS
+	NOT R7, R7
+	ADD R7, R7, #1
+
+END_ABS:
+	AND R0, R0, #0
+	ADD R0, R0, R7
+	
+	LDR R7, R6, #0
+	
+	ADD R6, R6, #1
+	RET
+	
+
+///////////////////////////////////////////
+
+;PRINT R0
+MyString .blkw #6 #-1
+MODE_PTR .fill #0
+
+PrintNum:
+	ADD R6, R6, #-7
+	
+	STR R0, R6, #6
+	STR R1, R6, #5
+	STR R2, R6, #4
+	STR R3, R6, #3
+	STR R4, R6, #2
+	STR R5, R6, #1
+	STR R7, R6, #0
+	
+	LDR R0, R6, #7
+	
+	ADD R0, R0, #0
+	BRzp POSITIVE_NUM
+	AND R1, R1, #0
+	ADD R1, R1, R0
+	LD R0, NUM_48
+	ADD R0, R0, #3
+	NOT R0, R0
+	ADD R0, R0, #1;; '-'=>R0
+	OUT
+	AND R0, R0, #0
+	ADD R0, R0, R1
+	NOT R0, R0
+	ADD R0, R0, #1
+
+POSITIVE_NUM:
+	LEA R4, MyString
+	AND R5, R5, #0
+	ADD R5, R5, #4
+	AND R1, R1, #0
+	STR R1, R4, #5; INSERT '\0' TO THE END OF THE ARRAY
+
+
+	AND R1, R1, #0
+	ADD R1, R1, #10	
+INSERT_DEGITS_LOOP:
+	LEA R3, MODE_PTR
+	ADD R6, R6, #-3
+	
+	STR R0, R6, #2
+	STR R1, R6, #1
+	STR R3, R6, #0
+	
+	JSR Div
+	ADD R6, R6, #3
+	
+	LDR R3, R3, #0
+	
+	
+	LEA R4, MyString
+	ADD R4, R4, R5
+	LD R7, NUM_48
+	NOT R7, R7
+	ADD R7, R7, #1
+	
+	ADD R3, R3, R7; CONVERT THE DIGIT TO ASCII
+	STR R3, R4, #0
+	
+	
+	ADD R5, R5, #-1
+	ADD R0, R0, #0
+	BRp INSERT_DEGITS_LOOP
+	
+	
+		
+
+PRINT_MyNum:
+	LEA R0, MyString
+	ADD R5, R5, #1
+	ADD R0, R0, R5
+	PUTS
+
+	LDR R0, R6, #6
+	LDR R1, R6, #5
+	LDR R2, R6, #4
+	LDR R3, R6, #3
+	LDR R4, R6, #2
+	LDR R5, R6, #1
+	LDR R7, R6, #0
+	
+	ADD R6, R6, #7
+
+	RET
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+Div:
+	ADD R6, R6, #-6
+	
+	STR R7, R6, #0
+	STR R4, R6, #1
+	STR R5, R6, #2
+	STR R1, R6, #3
+	STR R3, R6, #4
+	STR R2, R6, #5
+	
+	LDR R5, R6, #8
+	LDR R1, R6, #7
+
+
+	AND R2, R2, #0
+	AND R3, R3, #0
+	AND R4, R4, #0
+	
+	ADD R6, R6, #-2
+	STR R5, R6, #1
+	STR R1, R6, #0
+	
+	JSR CHECK_SIGN
+
+	ADD R6, R6, #2
+	
+	ADD R1,R1, #0
+	BRz ERROR_DIV
+	BRn CHECK_R0_Div
+	
+	ADD R1, R1, #-1
+	NOT R1, R1
+
+CHECK_R0_Div:
+	ADD R5,R5, #0
+	BRp PREV_LOOP_Div
+	
+	ADD R5, R5, #-1
+	NOT R5, R5
+
+PREV_LOOP_Div	
+	ADD R4, R0, #0
+	AND R3, R3, #0
+	ADD R3, R5, #0
+	
+	ADD R3, R3, R1
+	BRn END_DIV_LOOP
+	BRz NO_MOD
+DIV_LOOP: 
+	ADD R2, R2, #1
+	ADD R3, R3, R1
+	BRp DIV_LOOP
+	BRz NO_MOD
+	
+
+END_DIV_LOOP:
+	ADD R1, R1,#-1
+	NOT R1, R1
+	ADD R3, R1, R3
+	BR DECISION_SIGN
+
+NO_MOD:
+	AND R3, R3, #0
+	ADD R2, R2, #1
+
+DECISION_SIGN:
+	ADD R4, R4, #0
+	BRp END_DIV
+	
+	NOT R2, R2
+	ADD R2, R2, #1
+	BR END_DIV
+	
+
+ERROR_DIV:
+	ADD R2, R2, #-1
+	ADD R3, R3, #-1
+	BR END_DIV
+
+END_DIV:
+	LDR R0, R6, #6
+	STR R3, R0, #0
+	
+	AND R0, R0, #0
+	ADD R0, R0, R2;LOAD RETUEN VALUE
+
+	LDR R7, R6, #0
+	LDR R4, R6, #1
+	LDR R5, R6, #2
+	LDR R1, R6, #3
+	LDR R3, R6, #4
+	LDR R2, R6, #5
+
+	
+	ADD R6, R6, #6
+	RET
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+NUM_48 .fill #-48
+SPACE .fill #-32
+ENTER_NUM .stringz "Enter N, i.e., number between 1 to 30: "
+GetNum:
+	ADD R6,R6, #-6
+	
+	STR R7, R6, #5
+	STR R1, R6, #4
+	STR R2, R6, #3
+	STR R3, R6, #2
+	STR R4, R6, #1
+	STR R5, R6, #0
+
+	LEA R0, ENTER_NUM
+	PUTS
+
+	AND R2, R2, #0		;THE NUMBER
+
+CHECK_FIRST_NUMBER:	;CHECK IF FIRST NUMBER IN
+	GETC
+	OUT
+	AND R5, R5, #0
+	ADD R5, R0, R5
+	LD R1, SPACE
+	ADD R1, R1, R5
+	BRz CHECK_FIRST_NUMBER
+	
+INPUT_LOOP_GETNUM:
+	
+	ADD R1, R5, #-10
+	BRz END_GETNUM  ;CHECK IF ITS ENTER
+	
+			;SHIFT LEFT THE NUMBER
+	
+	LD R1, NUM_48
+	ADD R5, R5, R1
+
+	AND R1, R1, #0
+	ADD R1, R1, #10
+
+	ADD R6, R6, #-2
+	
+	
+	;CALL MUL FUNCTION
+	STR R2, R6, #1
+	STR R1, R6, #0
+	JSR Mul
+	ADD R6, R6, #2
+	
+	AND R2, R2, #0
+	ADD R2, R2, R0
+	
+	ADD R2, R2, R5
+	
+	GETC
+	OUT
+	AND R5, R5, #0
+	ADD R5, R0, R5
+	BR INPUT_LOOP_GETNUM
+
+
+
+END_GETNUM:
+	AND R0, R0, #0
+	ADD R0, R0, R2
+	
+	LDR R7, R6, #5
+	LDR R1, R6, #4
+	LDR R2, R6, #3
+	LDR R3, R6, #2
+	LDR R4, R6, #1
+	LDR R5, R6, #0
+	
+	
+	ADD R6, R6, #6
+	RET
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;MULTI
+;R0 * R1 =>R2
+
+Mul:
+	ADD R6, R6, #-4
+	
+	STR R7, R6, #2
+	STR R3, R6, #1
+	STR R2, R4, #3
+	STR R1, R6, #0
+
+	;LOAD PARAMETERS
+	
+	LDR R1, R6, #4
+	LDR R3, R6, #5
+	
+
+	AND R2,R2,#0
+	
+	;CALL CECK SIGN
+	ADD R6, R6, #-2
+	STR R3, R6, #1
+	STR R1, R6, #0
+	
+	JSR CHECK_SIGN
+	
+	ADD R6, R6, #2
+
+	ADD R0,R0, #0
+	BRz END_SUB_Mul
+	
+	ADD R1, R1, #0
+	BRp CHECK_R0
+
+	ADD R1,R1, #-1
+	NOT R1, R1
+
+CHECK_R0:
+	ADD R3, R3, #0
+	BRp MUL_LOOP
+	
+	ADD R3, R3, #-1
+	NOT R3, R3
+
+
+MUL_LOOP: 
+	ADD R3,R3,0
+	BRz END_LOOP
+	ADD R2,R2,R1
+	ADD R3,R3,#-1
+	BR MUL_LOOP
+
+END_LOOP:
+	ADD R0,R0,#0
+	BRn FLIP_R2
+	BRp END_SUB_Mul
+
+FLIP_R2:
+	NOT R2, R2
+	ADD R2, R2, #1
+	BR END_SUB_Mul
+
+END_SUB_Mul:
+	AND R0, R0, #0
+	ADD R0, R0, R2;LOAD RETURN VALUE
+	
+	LDR R7, R6, #2
+	LDR R3, R6, #1
+	LDR R2, R4, #3
+	LDR R1, R6, #0
+	
+	ADD R6, R6, #4
+RET
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;check witch sing -*-=+\+*-=-\+*+=+
+;if minus => return R3=-1
+;if plus => return R3=1
+;if R1==0||R0==0 return R3=0
+
+CHECK_SIGN:
+	ADD R6, R6, #-4
+	
+	STR R7, R6, #0
+	STR R1, R6, #1
+	STR R2, R6, #2
+	STR R3, R6, #3
+	
+	;LOAD R1, R2 R0
+	
+	LDR R1, R6, #4
+	LDR R2, R6, #5
+	
+	
+	AND R3, R3, #0
+	
+	ADD R1,R1,#0
+	BRz ZERO
+	ADD R2,R2,#0
+	BRz ZERO
+
+	BRn R0_NEG
+	BRp R0_POS
+
+R0_POS:
+	ADD R1,R1,#0
+	BRp PLUS
+	BR MINUS
+	
+R0_NEG:
+	ADD R1, R1, #0
+	BRp MINUS
+	BR PLUS
+
+MINUS:
+	ADD R3,R3,#-1
+	BR ZERO
+	
+PLUS:
+	ADD R3,R3,#1
+	BR ZERO
+
+ZERO:
+	AND R0, R0, #0
+	ADD R0, R3, #0;LOAD RETURN VALUE
+
+	LDR R7, R6, #0
+	LDR R1, R6, #1
+	LDR R2, R6, #2
+	LDR R3, R6, #3
+	
+	ADD R6, R6, #4
+	RET
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.END
